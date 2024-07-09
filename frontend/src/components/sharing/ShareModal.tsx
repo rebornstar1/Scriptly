@@ -1,14 +1,10 @@
-// src/components/modals/ShareModal.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
-} from '../ui/dialog';
-import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Switch } from '../ui/switch';
@@ -38,7 +34,11 @@ interface ShareModalProps {
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({
-  isOpen, onClose, documentId, documentTitle, onUpdate
+  isOpen,
+  onClose,
+  documentId,
+  documentTitle,
+  onUpdate
 }) => {
   const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,64 +49,77 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const getUserDisplayName = (user: User) =>
-    user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username;
-
   const fetchCollaborators = useCallback(async () => {
     try {
-      const res = await axios.get(
+      const response = await axios.get(
         `http://localhost:3001/api/documents/${documentId}/collaborators`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
-      setCollaborators(res.data.collaborators || []);
-      setOwner(res.data.owner);
-      setIsPublic(res.data.isPublic || false);
-    } catch (err) {
+      setCollaborators(response.data.collaborators || []);
+      setOwner(response.data.owner);
+      setIsPublic(response.data.isPublic || false);
+    } catch (error) {
+      console.error('Error fetching collaborators:', error);
       toast.error('Failed to load collaborators');
-      console.error(err);
     }
   }, [documentId, token]);
 
   const searchUsers = useCallback(async () => {
-    if (searchQuery.length < 2) return setSearchResults([]);
-    setSearchLoading(true);
     try {
-      const res = await axios.get(
+      setSearchLoading(true);
+      const response = await axios.get(
         `http://localhost:3001/api/auth/users/search?query=${encodeURIComponent(searchQuery)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
-      setSearchResults(res.data);
-    } catch (err) {
-      console.error(err);
+      setSearchResults(response.data);
+    } catch (error) {
+      console.error('Error searching users:', error);
     } finally {
       setSearchLoading(false);
     }
   }, [searchQuery, token]);
 
   useEffect(() => {
-    if (isOpen) fetchCollaborators();
-  }, [isOpen, fetchCollaborators]);
+    if (isOpen) {
+      fetchCollaborators();
+    }
+  }, [isOpen, documentId, fetchCollaborators]);
 
   useEffect(() => {
-    searchUsers();
+    if (searchQuery.length >= 2) {
+      searchUsers();
+    } else {
+      setSearchResults([]);
+    }
   }, [searchQuery, searchUsers]);
 
-  const shareWithUser = async (user: User, permission: 'read' | 'write' | 'admin') => {
-    setLoading(true);
+  const shareWithUser = async (user: User, permission: 'read' | 'write' | 'admin' = 'write') => {
     try {
+      setLoading(true);
       await axios.post(
         `http://localhost:3001/api/documents/${documentId}/share`,
-        { email: user.email, permission },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          email: user.email,
+          permission
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
-      toast.success(`Shared with ${user.username}`);
+      
+      toast.success(`Document shared with ${user.username}`);
       setSearchQuery('');
       setSearchResults([]);
       fetchCollaborators();
       onUpdate?.();
-    } catch (err) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.message : 'Failed to share';
-      toast.error(msg || 'Failed to share document');
+    } catch (error) {
+      console.error('Error sharing document:', error);
+      const message = axios.isAxiosError(error) ? error.response?.data?.message : 'Failed to share document';
+      toast.error(message || 'Failed to share document');
     } finally {
       setLoading(false);
     }
@@ -117,13 +130,18 @@ const ShareModal: React.FC<ShareModalProps> = ({
       await axios.put(
         `http://localhost:3001/api/documents/${documentId}/collaborators/${userId}`,
         { permission },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
+      
       toast.success('Permissions updated');
       fetchCollaborators();
       onUpdate?.();
-    } catch (err) {
-      toast.error('Failed to update permissions');
+    } catch (error) {
+      console.error('Error updating permissions:', error);
+      const message = axios.isAxiosError(error) ? error.response?.data?.message : 'Failed to update permissions';
+      toast.error(message || 'Failed to update permissions');
     }
   };
 
@@ -131,13 +149,18 @@ const ShareModal: React.FC<ShareModalProps> = ({
     try {
       await axios.delete(
         `http://localhost:3001/api/documents/${documentId}/collaborators/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
+      
       toast.success('Collaborator removed');
       fetchCollaborators();
       onUpdate?.();
-    } catch (err) {
-      toast.error('Failed to remove collaborator');
+    } catch (error) {
+      console.error('Error removing collaborator:', error);
+      const message = axios.isAxiosError(error) ? error.response?.data?.message : 'Failed to remove collaborator';
+      toast.error(message || 'Failed to remove collaborator');
     }
   };
 
@@ -146,20 +169,32 @@ const ShareModal: React.FC<ShareModalProps> = ({
       await axios.put(
         `http://localhost:3001/api/documents/${documentId}/visibility`,
         { isPublic: !isPublic },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
+      
       setIsPublic(!isPublic);
       toast.success(`Document is now ${!isPublic ? 'public' : 'private'}`);
       onUpdate?.();
-    } catch (err) {
-      toast.error('Failed to update visibility');
+    } catch (error) {
+      console.error('Error updating visibility:', error);
+      const message = axios.isAxiosError(error) ? error.response?.data?.message : 'Failed to update visibility';
+      toast.error(message || 'Failed to update visibility');
     }
+  };
+
+  const getUserDisplayName = (user: User) => {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user.username;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Share Document
@@ -167,13 +202,14 @@ const ShareModal: React.FC<ShareModalProps> = ({
           <DialogDescription>{documentTitle}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-1 space-y-6">
-          {/* Visibility */}
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-modal px-1">
+          <div className="space-y-6 pr-1">
+          {/* Visibility Toggle */}
           <Card>
             <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="flex gap-2 items-center">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
                     {isPublic ? (
                       <Globe className="h-4 w-4 text-green-600" />
                     ) : (
@@ -182,7 +218,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                     <h3 className="font-medium">Document Visibility</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {isPublic ? 'Anyone can view this document' : 'Only collaborators can access'}
+                    {isPublic ? 'Anyone can view this document' : 'Only collaborators can access this document'}
                   </p>
                 </div>
                 <Switch checked={isPublic} onCheckedChange={toggleVisibility} />
@@ -190,12 +226,13 @@ const ShareModal: React.FC<ShareModalProps> = ({
             </CardContent>
           </Card>
 
-          {/* Search Users */}
+          {/* Add Collaborators */}
           <div className="space-y-3">
             <h3 className="font-medium">Add People</h3>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                type="text"
                 placeholder="Search by email, username, or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -203,104 +240,136 @@ const ShareModal: React.FC<ShareModalProps> = ({
               />
               {searchLoading && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                 </div>
               )}
             </div>
 
+            {/* Search Results */}
             {searchResults.length > 0 && (
               <Card>
-                <CardContent className="p-0 max-h-32 overflow-y-auto scrollbar-modal">
-                  {searchResults.map((user) => (
-                    <div
-                      key={user._id}
-                      className="flex items-center justify-between p-3 border-b last:border-b-0 hover:bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>{getUserDisplayName(user)[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-sm">{getUserDisplayName(user)}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                <CardContent className="p-0">
+                  <div className="max-h-32 overflow-y-auto scrollbar-modal rounded-md">
+                    {searchResults.map((user) => (
+                      <div
+                        key={user._id}
+                        className="flex items-center justify-between p-3 border-b last:border-b-0 hover:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-sm">
+                              {getUserDisplayName(user).charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-sm">{getUserDisplayName(user)}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {['read', 'write', 'admin'].map((level) => (
+                        <div className="flex gap-1">
                           <Button
-                            key={level}
                             size="sm"
                             variant="outline"
-                            onClick={() => shareWithUser(user, level as 'read' | 'write' | 'admin')}
+                            onClick={() => shareWithUser(user, 'read')}
                             disabled={loading}
                             className="text-xs"
                           >
-                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                            Read
                           </Button>
-                        ))}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => shareWithUser(user, 'write')}
+                            disabled={loading}
+                            className="text-xs"
+                          >
+                            Write
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => shareWithUser(user, 'admin')}
+                            disabled={loading}
+                            className="text-xs"
+                          >
+                            Admin
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Collaborators */}
+          {/* Current Collaborators */}
           <div className="space-y-3">
             <h3 className="font-medium">People with access</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-modal">
+            <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-modal rounded-md pr-1">
+              {/* Owner */}
               {owner && (
                 <Card>
-                  <CardContent className="p-3 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{getUserDisplayName(owner)[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">{getUserDisplayName(owner)} (You)</p>
-                        <p className="text-xs text-muted-foreground">{owner.email}</p>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                            {getUserDisplayName(owner).charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{getUserDisplayName(owner)} (You)</p>
+                          <p className="text-xs text-muted-foreground">{owner.email}</p>
+                        </div>
                       </div>
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                        Owner
+                      </Badge>
                     </div>
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">Owner</Badge>
                   </CardContent>
                 </Card>
               )}
 
-              {collaborators.map(({ user, permission }) => (
-                <Card key={user._id}>
-                  <CardContent className="p-3 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{getUserDisplayName(user)[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">{getUserDisplayName(user)}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
+              {/* Collaborators */}
+              {collaborators.map((collaborator) => (
+                <Card key={collaborator.user._id}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-sm">
+                            {getUserDisplayName(collaborator.user).charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{getUserDisplayName(collaborator.user)}</p>
+                          <p className="text-xs text-muted-foreground">{collaborator.user.email}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <Select
-                        value={permission}
-                        onValueChange={(value) => updatePermission(user._id, value as any)}
-                      >
-                        <SelectTrigger className="w-20 h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="read">Read</SelectItem>
-                          <SelectItem value="write">Write</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeCollaborator(user._id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={collaborator.permission}
+                          onValueChange={(value) => updatePermission(collaborator.user._id, value as 'read' | 'write' | 'admin')}
+                        >
+                          <SelectTrigger className="w-20 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="read">Read</SelectItem>
+                            <SelectItem value="write">Write</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeCollaborator(collaborator.user._id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -308,16 +377,19 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
               {collaborators.length === 0 && (
                 <Card>
-                  <CardContent className="p-6 text-center text-sm text-muted-foreground">
-                    No collaborators yet. Use the search above to add people.
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground text-center">
+                      No collaborators yet. Search for users above to share this document.
+                    </p>
                   </CardContent>
                 </Card>
               )}
             </div>
           </div>
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button onClick={onClose}>Done</Button>
         </DialogFooter>
       </DialogContent>
