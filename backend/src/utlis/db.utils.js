@@ -4,27 +4,30 @@ import { checkDocumentPermission } from "./auth.utils.js";
 // Updated to handle title and user permissions
 export async function saveDocument(id, data, title, user = null) {
     try {
-        
+        // Check if user has write permission (skip for legacy support)
         if (user) {
             const { hasPermission } = await checkDocumentPermission(id, user, 'write');
             if (!hasPermission) {
                 throw new Error('Access denied: insufficient permissions to save document');
             }
         }
+
+        // Convert the Quill delta object to a JSON string for storage
         const stringifiedData = data ? JSON.stringify(data) : undefined;
 
+        // Create update object with data and optional title
         const updateObj = {};
         
         if (stringifiedData !== undefined) {
             updateObj.data = stringifiedData;
         }
 
-        
+        // Add title to update if provided
         if (title) {
             updateObj.title = title;
         }
 
-        
+        // Update the document with the stringified data and title
         const result = await Document.findByIdAndUpdate(
             id,
             updateObj,
