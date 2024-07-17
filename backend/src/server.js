@@ -3,7 +3,7 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import connectToDb from './config/db.js';
-import { findOrCreateDocument, saveDocument } from './utils/db.utils.js';
+import { findOrCreateDocument, saveDocument } from './utlis/db.utils.js';
 import documentRoutes from './routes/document.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import { socketAuth } from './middleware/socket.middleware.js';
@@ -27,7 +27,7 @@ connectToDb();
 
 const ioServer = new Server(server, {
     cors: {
-        origin: ['http://localhost:5173', 'http://localhost:5175'],
+        origin: ['http://localhost:5173','http://localhost:5174', 'http://localhost:5175'],
         methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     }
 });

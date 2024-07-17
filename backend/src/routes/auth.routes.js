@@ -19,6 +19,8 @@ router.post('/register', validateRegistration, handleValidationErrors, async (re
     try {
         const { username, email, password, firstName, lastName } = req.body;
 
+        console.log("req.body:", req.body);
+
         // Check if user already exists
         const existingUser = await User.findOne({
             $or: [{ email }, { username }]
@@ -38,6 +40,8 @@ router.post('/register', validateRegistration, handleValidationErrors, async (re
             firstName,
             lastName
         });
+
+        console.log("New user before save:", user);
 
         await user.save();
 

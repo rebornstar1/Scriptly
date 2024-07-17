@@ -1,7 +1,7 @@
 import express from 'express';
 import Document from '../models/document.model.js';
 import { authenticate, optionalAuth } from '../middleware/auth.middleware.js';
-import { checkDocumentPermission } from '../utils/auth.utils.js';
+import { checkDocumentPermission } from '../utlis/auth.utils.js';
 
 const router = express.Router();
 
