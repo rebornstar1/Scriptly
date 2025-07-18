@@ -14,6 +14,8 @@ import VersionHistory from "../../components/VersionHistory/VersionHistory";
 import { Button } from "../../components/ui/button";
 import { Share, MessageCircle, RotateCcw, Eye } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://scriptly-eglj.onrender.com';
+
 interface DocumentData {
   data?: unknown;
   title?: string;
@@ -93,7 +95,7 @@ const TextEditor = () => {
       socketOptions.auth.token = token;
     }
 
-    const socket = io("http://localhost:3001", socketOptions);
+    const socket = io(`${API_URL}`, socketOptions);
     setSocket(socket);
 
     return () => {

@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent } from '../ui/card';
 import { Search, Trash2, Users, Globe, Lock } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || '${API_URL}/api';
+
+
 interface User {
   _id: string;
   username: string;
@@ -49,10 +52,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
+
+
   const fetchCollaborators = useCallback(async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/documents/${documentId}/collaborators`,
+        `${API_URL}/api/documents/${documentId}/collaborators`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -70,7 +75,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     try {
       setSearchLoading(true);
       const response = await axios.get(
-        `http://localhost:3001/api/auth/users/search?query=${encodeURIComponent(searchQuery)}`,
+        `${API_URL}/api/auth/users/search?query=${encodeURIComponent(searchQuery)}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -101,7 +106,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     try {
       setLoading(true);
       await axios.post(
-        `http://localhost:3001/api/documents/${documentId}/share`,
+        `${API_URL}/api/documents/${documentId}/share`,
         {
           email: user.email,
           permission
@@ -128,7 +133,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const updatePermission = async (userId: string, permission: 'read' | 'write' | 'admin') => {
     try {
       await axios.put(
-        `http://localhost:3001/api/documents/${documentId}/collaborators/${userId}`,
+        `${API_URL}/api/documents/${documentId}/collaborators/${userId}`,
         { permission },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -148,7 +153,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const removeCollaborator = async (userId: string) => {
     try {
       await axios.delete(
-        `http://localhost:3001/api/documents/${documentId}/collaborators/${userId}`,
+        `${API_URL}/api/documents/${documentId}/collaborators/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -167,7 +172,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const toggleVisibility = async () => {
     try {
       await axios.put(
-        `http://localhost:3001/api/documents/${documentId}/visibility`,
+        `${API_URL}/api/documents/${documentId}/visibility`,
         { isPublic: !isPublic },
         {
           headers: { Authorization: `Bearer ${token}` }

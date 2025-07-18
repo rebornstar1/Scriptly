@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://scriptly-eglj.onrender.com';
+
 interface User {
   id: string;
   username: string;
@@ -70,7 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const verifyToken = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/auth/me');
+      const response = await axios.get(`${API_URL}/api/auth/me`);
       setUser(response.data.user);
       localStorage.setItem('auth_user', JSON.stringify(response.data.user));
     } catch (error) {
@@ -104,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -132,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData): Promise<boolean> => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', userData);
+      const response = await axios.post(`${API_URL}/api/auth/register`, userData);
 
       const { token: newToken, user: newUser } = response.data;
 
@@ -157,7 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
     try {
-      const response = await axios.put('http://localhost:3001/api/auth/profile', userData);
+      const response = await axios.put(`${API_URL}/api/auth/profile`, userData);
       
       const updatedUser = response.data.user;
       setUser(updatedUser);
@@ -174,7 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
     try {
-      await axios.put('http://localhost:3001/api/auth/change-password', {
+      await axios.put(`${API_URL}/api/auth/change-password`, {
         currentPassword,
         newPassword,
       });

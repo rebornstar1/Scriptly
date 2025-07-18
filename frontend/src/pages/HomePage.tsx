@@ -5,6 +5,8 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { FileText, Save, ArrowRight, Edit, MessageSquare } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://scriptly-eglj.onrender.com';
+
 interface Document {
   _id: string;
   title: string;
@@ -18,7 +20,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchRecentDocuments = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/documents");
+        const response = await axios.get(`${API_URL}/api/documents`);
         // Get the 3 most recently updated documents
         const recent = [...response.data]
           .sort((a: Document, b: Document) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -34,7 +36,7 @@ const HomePage = () => {
 
   const handleCreateDocument = async () => {
     try {
-      const response = await axios.post("http://localhost:3001/api/documents", {
+      const response = await axios.post(`${API_URL}/api/documents`, {
         title: `Untitled Document - ${Math.floor(Math.random() * 900 + 100)}`,
       });
       navigate(`/documents/${response.data._id}`);
