@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { Button } from '../ui/button';
-import { History, RefreshCw, Eye, RotateCcw, X } from 'lucide-react';
+import { History, RefreshCw, Eye, X } from 'lucide-react';
 import './VersionHistory.css';
 
 interface Version {
@@ -10,14 +10,6 @@ interface Version {
   createdBy: string;
   createdAt: string;
   changeDescription?: string;
-}
-
-interface VersionData {
-  content: unknown;
-  title: string;
-  versionNumber: number;
-  createdAt: string;
-  createdBy: string;
 }
 
 interface VersionHistoryProps {
@@ -47,7 +39,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ socket, documentId }) =
         setLoading(false);
       };
 
-      const handleDocumentSaved = (data: { success: boolean }) => {
+      const handleDocumentSaved = () => {
         console.log('Document saved, refreshing versions');
         // Refresh versions after document save
         socket.emit('get-versions');
