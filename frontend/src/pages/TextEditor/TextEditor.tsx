@@ -86,31 +86,14 @@ const TextEditor = () => {
   // Initialize socket
   useEffect(() => {
     const socketOptions = {
-        auth: {} as Record<string, string>
+      auth: {} as Record<string, string>
     };
     
     if (token) {
-        socketOptions.auth.token = token;
-        console.log('Connecting with token:', token.substring(0, 20) + '...');
-    } else {
-        console.error('No token available for socket connection');
-        return;
+      socketOptions.auth.token = token;
     }
 
     const socket = io("http://localhost:3001", socketOptions);
-    
-    socket.on('connect', () => {
-        console.log('Socket connected successfully');
-    });
-    
-    socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error.message);
-    });
-    
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
-    });
-    
     setSocket(socket);
 
     return () => {
@@ -207,10 +190,11 @@ const TextEditor = () => {
     }
   };
 
-  // Add this function in your TextEditor component for testing:
+  // Test function to create manual version
   const createManualVersion = () => {
     if (socket && quill) {
       const content = quill.getContents();
+      console.log('Creating manual version with content:', content);
       socket.emit('create-version', {
         title: documentTitle,
         content: content,
@@ -232,41 +216,24 @@ const TextEditor = () => {
       modules: {
         toolbar: [
           [{ header: [1, 2, 3, 4, 5, 6, false] }],
-
           [{ font: [] }],
-
           [{ size: [] }],
-
           ["bold", "italic", "underline", "strike"],
-
           [{ color: [] }, { background: [] }],
-
           [{ align: [] }],
-
           [{ list: "ordered" }, { list: "bullet" }],
-
           [{ indent: "-1" }, { indent: "+1" }],
-
           [{ direction: "rtl" }],
-
           ["blockquote", "code-block"],
-
           [{ script: "sub" }, { script: "super" }],
-
-          // Media
           ["link"],
-
-          // Remove formatting
         ],
       },
     });
 
-    quillInstance.setText("Loading..."); // Set initial text
-    quillInstance.disable(); // Disable editing initially
-
-    quillInstance.setText("")
-
-    // Save the Quill instance to state
+    quillInstance.setText("Loading...");
+    quillInstance.disable();
+    quillInstance.setText("");
 
     setQuill(quillInstance);
   }, []);
@@ -350,8 +317,15 @@ const TextEditor = () => {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            {/* Version History Button */}
-            <VersionHistory socket={socket} documentId={documentId} />
+            {/* Test Button for Creating Manual Version */}
+            <Button
+              onClick={createManualVersion}
+              size="sm"
+              variant="outline"
+              className="gap-2"
+            >
+              Create Test Version
+            </Button>
             
             <Button
               onClick={() => setIsChatOpen(!isChatOpen)}
@@ -382,6 +356,25 @@ const TextEditor = () => {
             isViewingVersion ? 'border-yellow-200 dark:border-yellow-700' : 'border-gray-200/50 dark:border-gray-700/50'
           }`}>
             <div id="container" ref={wrapperRef} className="min-h-[600px] min-w-[1200px]" />
+          </div>
+        </div>
+      </div>
+
+      {/* Version History Section at the Bottom for Testing */}
+      <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Version History (Testing)
+            </h3>
+            <div className="text-sm text-gray-500">
+              Document ID: {documentId}
+            </div>
+          </div>
+          
+          {/* Version History Component - No changes made to the component itself */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <VersionHistory socket={socket} documentId={documentId || ''} />
           </div>
         </div>
       </div>
