@@ -10,8 +10,9 @@ import { io, Socket } from "socket.io-client";
 import { useAuth } from "../../hooks/useAuth";
 import ShareModal from "../../components/sharing/ShareModal";
 import ChatPanel from "../../components/chat/ChatPanel";
+import VersionHistory from "../../components/VersionHistory/VersionHistory";
 import { Button } from "../../components/ui/button";
-import { Share, MessageCircle } from "lucide-react";
+import { Share, MessageCircle, RotateCcw, Eye } from "lucide-react";
 
 interface DocumentData {
   data?: unknown;
@@ -21,8 +22,15 @@ interface DocumentData {
   isPublic?: boolean;
 }
 
-const TextEditor = () => {
+interface VersionData {
+  content: unknown;
+  title: string;
+  versionNumber: number;
+  createdAt: string;
+  createdBy: string;
+}
 
+const TextEditor = () => {
   const { id: documentId } = useParams();
   const { token, user } = useAuth();
 
@@ -33,9 +41,16 @@ const TextEditor = () => {
   const [documentTitle, setDocumentTitle] = useState("Untitled Document");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  
+  // Version control states
+  const [currentVersion, setCurrentVersion] = useState<VersionData | null>(null);
+  const [isViewingVersion, setIsViewingVersion] = useState(false);
+  const [originalContent, setOriginalContent] = useState<unknown>(null);
+  const [originalTitle, setOriginalTitle] = useState<string>("");
 
+  // Auto-save functionality
   useEffect(() => {
-    if (socket === null || quill === null) return;
+    if (socket === null || quill === null || isViewingVersion) return;
 
     const interval = setInterval(() => {
       socket.emit("save-document", {
@@ -47,34 +62,55 @@ const TextEditor = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [socket, quill, documentTitle]);
+  }, [socket, quill, documentTitle, isViewingVersion]);
 
+  // Load document
   useEffect(() => {
     if (quill === null || socket === null) return;
 
     socket.once("load-document", (document: DocumentData) => {
       if (document.data) {
         quill.setContents(document.data as any || "");
+        setOriginalContent(document.data);
       }
       setDocumentTitle(document.title || "Untitled Document");
+      setOriginalTitle(document.title || "Untitled Document");
       quill.enable();
     });
 
     socket.emit("get-document", documentId, documentTitle);
 
     return () => {};
-  }, [documentId, quill, socket, documentTitle]);
+  }, [documentId, quill, socket]);
 
+  // Initialize socket
   useEffect(() => {
     const socketOptions = {
-      auth: {} as Record<string, string>
+        auth: {} as Record<string, string>
     };
     
     if (token) {
-      socketOptions.auth.token = token;
+        socketOptions.auth.token = token;
+        console.log('Connecting with token:', token.substring(0, 20) + '...');
+    } else {
+        console.error('No token available for socket connection');
+        return;
     }
 
     const socket = io("http://localhost:3001", socketOptions);
+    
+    socket.on('connect', () => {
+        console.log('Socket connected successfully');
+    });
+    
+    socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error.message);
+    });
+    
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+    });
+    
     setSocket(socket);
 
     return () => {
@@ -82,20 +118,51 @@ const TextEditor = () => {
     };
   }, [token]);
 
+  // Handle version control events
+  useEffect(() => {
+    if (socket === null || quill === null) return;
+
+    const handleVersionLoaded = (versionData: VersionData) => {
+      if (quill) {
+        // Save current state before loading version
+        setOriginalContent(quill.getContents());
+        setOriginalTitle(documentTitle);
+        
+        // Load the version content
+        quill.setContents(versionData.content as any);
+        setDocumentTitle(versionData.title);
+        setCurrentVersion(versionData);
+        setIsViewingVersion(true);
+        
+        // Disable editing when viewing a version
+        quill.disable();
+      }
+    };
+
+    socket.on('version-loaded', handleVersionLoaded);
+
+    return () => {
+      socket.off('version-loaded', handleVersionLoaded);
+    };
+  }, [socket, quill, documentTitle]);
+
+  // Handle real-time changes
   useEffect(() => {
     if (socket === null || quill === null) return;
 
     const handler = (delta: any) => {
-      quill.updateContents(delta);
+      if (!isViewingVersion) {
+        quill.updateContents(delta);
+      }
     };
     socket.on("receive-changes", handler);
     return () => {
       socket.off("receive-changes", handler);
     };
-  }, [socket, quill]);
+  }, [socket, quill, isViewingVersion]);
 
   useEffect(() => {
-    if (socket === null || quill === null) return;
+    if (socket === null || quill === null || isViewingVersion) return;
 
     const handler = (delta: any, _oldDelta: any, source: string) => {
       if (source !== "user") return;
@@ -107,7 +174,50 @@ const TextEditor = () => {
     return () => {
       quill.off("text-change", handler);
     };
-  }, [socket, quill]);
+  }, [socket, quill, isViewingVersion]);
+
+  // Version control functions
+  const exitVersionView = () => {
+    if (socket && quill && originalContent) {
+      // Re-enable editing
+      quill.enable();
+      setIsViewingVersion(false);
+      setCurrentVersion(null);
+      
+      // Restore original content
+      quill.setContents(originalContent as any);
+      setDocumentTitle(originalTitle);
+    }
+  };
+
+  const restoreVersion = () => {
+    if (currentVersion && socket && quill) {
+      // Save the version content as the current document
+      const data = quill.getContents();
+      socket.emit("save-document", { data, title: currentVersion.title });
+      
+      // Exit version view
+      setIsViewingVersion(false);
+      setCurrentVersion(null);
+      quill.enable();
+      
+      // Update states
+      setOriginalContent(data);
+      setOriginalTitle(currentVersion.title);
+    }
+  };
+
+  // Add this function in your TextEditor component for testing:
+  const createManualVersion = () => {
+    if (socket && quill) {
+      const content = quill.getContents();
+      socket.emit('create-version', {
+        title: documentTitle,
+        content: content,
+        description: 'Manual version created for testing'
+      });
+    }
+  };
 
   const wrapperRef = useCallback((wrapper: HTMLDivElement | null) => {
     if (wrapper === null) return;
@@ -161,8 +271,43 @@ const TextEditor = () => {
     setQuill(quillInstance);
   }, []);
 
+  if (!documentId) {
+    return <div>Document ID not found</div>;
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background">
+      {/* Version viewing banner */}
+      {isViewingVersion && currentVersion && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Eye className="h-5 w-5 text-yellow-600" />
+              <span className="text-sm font-medium text-yellow-800">
+                Viewing Version {currentVersion.versionNumber} - {new Date(currentVersion.createdAt).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={restoreVersion}
+                size="sm"
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restore This Version
+              </Button>
+              <Button
+                onClick={exitVersionView}
+                size="sm"
+                variant="outline"
+              >
+                Back to Current
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Beautiful Header with editable title and share button */}
       <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-blue-950/30 dark:to-purple-950/30 border-b border-border/50 shadow-sm backdrop-blur-sm">
         <div className="px-6 py-4 flex justify-between items-center">
@@ -173,11 +318,9 @@ const TextEditor = () => {
               <input
                 type="text"
                 value={documentTitle}
-                
                 onChange={(e) => setDocumentTitle(e.target.value)}
                 onBlur={() => {
-                  // Save title change when user finishes editing
-                  if (socket && quill) {
+                  if (socket && quill && !isViewingVersion) {
                     socket.emit("save-document", {
                       data: quill.getContents(),
                       title: documentTitle,
@@ -189,21 +332,27 @@ const TextEditor = () => {
                     e.currentTarget.blur();
                   }
                 }}
-                className="text-xl font-bold bg-transparent border-none outline-none focus:bg-white  focus:px-3 focus:py-1 focus:rounded-lg focus:shadow-sm transition-all duration-200 min-w-0 max-w-[max-content] flex-1 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="text-xl font-bold bg-transparent border-none outline-none focus:bg-white focus:px-3 focus:py-1 focus:rounded-lg focus:shadow-sm transition-all duration-200 min-w-0 max-w-[max-content] flex-1 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="Untitled Document"
                 spellCheck={false}
+                disabled={isViewingVersion}
               />
             </div>
             
             {/* Document Status Indicator */}
             <div className="flex items-center gap-2 mx-3 text-sm text-muted-foreground">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="hidden sm:inline">Auto-saved</span>
+              <div className={`w-2 h-2 rounded-full ${isViewingVersion ? 'bg-yellow-500' : 'bg-green-500 animate-pulse'}`} />
+              <span className="hidden sm:inline">
+                {isViewingVersion ? 'Viewing Version' : 'Auto-saved'}
+              </span>
             </div>
           </div>
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Version History Button */}
+            <VersionHistory socket={socket} documentId={documentId} />
+            
             <Button
               onClick={() => setIsChatOpen(!isChatOpen)}
               size="sm"
@@ -229,7 +378,9 @@ const TextEditor = () => {
       <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 dark:from-gray-900/50 dark:via-gray-900 dark:to-blue-950/30 py-6 px-4 flex justify-center">
         <div className="w-full max-w-6xl">
           {/* Editor with beautiful styling */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden backdrop-blur-sm">
+          <div className={`bg-white dark:bg-gray-900 rounded-xl shadow-xl border overflow-hidden backdrop-blur-sm ${
+            isViewingVersion ? 'border-yellow-200 dark:border-yellow-700' : 'border-gray-200/50 dark:border-gray-700/50'
+          }`}>
             <div id="container" ref={wrapperRef} className="min-h-[600px] min-w-[1200px]" />
           </div>
         </div>
@@ -248,20 +399,20 @@ const TextEditor = () => {
         </div>
         <div className="flex items-center gap-4">
           <span>{socket ? 'Connected' : 'Disconnected'}</span>
-          <span className="text-xs opacity-60">Last saved: {new Date().toLocaleTimeString()}</span>
+          <span className="text-xs opacity-60">
+            {isViewingVersion ? `Viewing Version ${currentVersion?.versionNumber}` : `Last saved: ${new Date().toLocaleTimeString()}`}
+          </span>
         </div>
       </div>
 
       {/* Share Modal */}
-      {documentId && (
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          documentId={documentId}
-          documentTitle={documentTitle}
-          onUpdate={() => {}} // Could trigger a document refetch if needed
-        />
-      )}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        documentId={documentId}
+        documentTitle={documentTitle}
+        onUpdate={() => {}}
+      />
 
       {/* Chat Panel */}
       <ChatPanel

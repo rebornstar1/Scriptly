@@ -3,10 +3,14 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import connectToDb from './config/db.js';
-import { findOrCreateDocument, saveDocument } from './utlis/db.utils.js';
+import { findOrCreateDocument, saveDocument, getDocumentVersions, getVersion, createVersion } from './utlis/db.utils.js';
 import documentRoutes from './routes/document.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import versionRoutes from './routes/version.routes.js';
 import { socketAuth } from './middleware/socket.middleware.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Create Express app
 const app = express();
@@ -18,6 +22,7 @@ app.use(express.json());
 // API Routes
 app.use('/api/documents', documentRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/versions', versionRoutes);
 
 // Create HTTP server with Express
 const server = http.createServer(app);
@@ -37,15 +42,18 @@ ioServer.use(socketAuth);
 
 ioServer.on('connection', (socket) => {
     console.log(`New client ${socket.id} connected`);
+    console.log(`User: ${socket.user.username} (${socket.user._id})`);
 
     socket.on('get-document', async (documentId, title) => {
         try {
+            // Make sure we have a valid user
+            if (!socket.user || !socket.user._id) {
+                throw new Error('User not authenticated');
+            }
+            
             // Fetch the document from your database or storage
             const document = await findOrCreateDocument(documentId, title, socket.user);
-
-            // console.log('Client connected with document ID:', documentId);
             socket.join(documentId);
-
             socket.emit('load-document', document);
 
             socket.on('send-changes', (delta) => {
@@ -68,9 +76,14 @@ ioServer.on('connection', (socket) => {
 
             socket.on('save-document', async (data) => {
                 try {
-                    // Save document content and title if provided
+                    console.log(`Saving document ${documentId} for user ${socket.user.username}`);
+                    console.log(`Data received:`, data);
+                    
                     await saveDocument(documentId, data.data, data.title, socket.user);
-                    // console.log('Document saved successfully');
+                    
+                    // Emit success event
+                    socket.emit('document-saved', { success: true });
+                    console.log(`Document ${documentId} saved successfully`);
                 } catch (error) {
                     console.error('Error saving document:', error);
                     socket.emit('error', { message: 'Error saving document: ' + error.message });
@@ -116,6 +129,61 @@ ioServer.on('connection', (socket) => {
                     console.error('Error handling typing status:', error);
                 }
             });
+
+            // Version control socket events
+            socket.on('get-versions', async () => {
+                try {
+                    console.log(`Getting versions for document ${documentId}`);
+                    const versions = await getDocumentVersions(documentId);
+                    socket.emit('versions-list', versions);
+                } catch (error) {
+                    console.error('Error fetching versions:', error);
+                    socket.emit('error', { message: 'Error fetching versions: ' + error.message });
+                }
+            });
+
+            socket.on('load-version', async (versionNumber) => {
+                try {
+                    console.log(`Loading version ${versionNumber} for document ${documentId}`);
+                    const version = await getVersion(documentId, versionNumber);
+                    if (version) {
+                        socket.emit('version-loaded', {
+                            content: version.content,
+                            title: version.title,
+                            versionNumber: version.versionNumber,
+                            createdAt: version.createdAt,
+                            createdBy: version.createdBy
+                        });
+                    } else {
+                        socket.emit('error', { message: 'Version not found' });
+                    }
+                } catch (error) {
+                    console.error('Error loading version:', error);
+                    socket.emit('error', { message: 'Error loading version: ' + error.message });
+                }
+            });
+
+            // Manual version creation (optional)
+            socket.on('create-version', async (data) => {
+                try {
+                    const { title, content, description } = data;
+                    await createVersion(
+                        documentId, 
+                        title, 
+                        content, 
+                        socket.user._id.toString(),
+                        description || 'Manual version created'
+                    );
+                    
+                    // Refresh versions list
+                    const versions = await getDocumentVersions(documentId);
+                    socket.emit('versions-list', versions);
+                } catch (error) {
+                    console.error('Error creating version:', error);
+                    socket.emit('error', { message: 'Error creating version: ' + error.message });
+                }
+            });
+
         } catch (error) {
             console.error('Error handling document:', error);
             socket.emit('error', { message: 'Error loading document: ' + error.message });

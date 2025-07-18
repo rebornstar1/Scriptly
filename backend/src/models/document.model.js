@@ -7,16 +7,17 @@ const documentSchema = new mongoose.Schema({
     },
     title: {
         type: String,
+        required: true,
         default: 'Untitled Document'
     },
     data: {
-        type: String,
-        default: ''
+        type: mongoose.Schema.Types.Mixed, // Changed from String to Mixed to handle objects
+        default: {}
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: false
+        required: true
     },
     collaborators: [{
         user: {
@@ -25,8 +26,8 @@ const documentSchema = new mongoose.Schema({
         },
         permission: {
             type: String,
-            enum: ['read', 'write', 'admin'],
-            default: 'write'
+            enum: ['view', 'edit', 'admin'],
+            default: 'edit'
         },
         addedAt: {
             type: Date,
@@ -45,17 +46,14 @@ const documentSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
+}, {
+    minimize: false // This ensures empty objects are saved
 });
 
-documentSchema.pre('save', function (next) {
+// Update the updatedAt field on save
+documentSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     next();
 });
 
-documentSchema.pre('findOneAndUpdate', function () {
-    this.set({ updatedAt: Date.now() });
-});
-
-const Document = mongoose.model('Document', documentSchema);
-
-export default Document;
+export default mongoose.model('Document', documentSchema);

@@ -1,0 +1,166 @@
+import React, { useState, useEffect } from 'react';
+import { Socket } from 'socket.io-client';
+import { Button } from '../ui/button';
+import { History, RefreshCw, Eye, RotateCcw, X } from 'lucide-react';
+import './VersionHistory.css';
+
+interface Version {
+  versionNumber: number;
+  title: string;
+  createdBy: string;
+  createdAt: string;
+  changeDescription?: string;
+}
+
+interface VersionData {
+  content: unknown;
+  title: string;
+  versionNumber: number;
+  createdAt: string;
+  createdBy: string;
+}
+
+interface VersionHistoryProps {
+  socket: Socket | null;
+  documentId: string;
+}
+
+const VersionHistory: React.FC<VersionHistoryProps> = ({ socket, documentId }) => {
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (socket && showHistory) {
+      setLoading(true);
+      console.log('Requesting versions for document:', documentId);
+      socket.emit('get-versions');
+      
+      const handleVersionsList = (versionsList: Version[]) => {
+        console.log('Received versions:', versionsList);
+        setVersions(versionsList);
+        setLoading(false);
+      };
+
+      const handleError = (error: { message: string }) => {
+        console.error('Version history error:', error);
+        setLoading(false);
+      };
+
+      const handleDocumentSaved = (data: { success: boolean }) => {
+        console.log('Document saved, refreshing versions');
+        // Refresh versions after document save
+        socket.emit('get-versions');
+      };
+
+      socket.on('versions-list', handleVersionsList);
+      socket.on('error', handleError);
+      socket.on('document-saved', handleDocumentSaved);
+
+      return () => {
+        socket.off('versions-list', handleVersionsList);
+        socket.off('error', handleError);
+        socket.off('document-saved', handleDocumentSaved);
+      };
+    }
+  }, [socket, showHistory, documentId]);
+
+  const loadVersion = (versionNumber: number) => {
+    if (socket) {
+      console.log('Loading version:', versionNumber);
+      socket.emit('load-version', versionNumber);
+      setShowHistory(false);
+    }
+  };
+
+  const refreshVersions = () => {
+    if (socket) {
+      console.log('Refreshing versions for document:', documentId);
+      setLoading(true);
+      socket.emit('get-versions');
+    }
+  };
+
+  return (
+    <div className="version-history-container">
+      <Button
+        onClick={() => setShowHistory(!showHistory)}
+        size="sm"
+        variant="outline"
+        className="gap-2"
+      >
+        <History className="h-4 w-4" />
+        <span className="hidden sm:inline">Versions</span>
+      </Button>
+      
+      {showHistory && (
+        <div className="version-history-panel">
+          <div className="version-history-header">
+            <h3 className="text-lg font-semibold">Version History</h3>
+            <div className="flex gap-2">
+              <Button
+                onClick={refreshVersions}
+                size="sm"
+                variant="ghost"
+                className="p-2"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                onClick={() => setShowHistory(false)}
+                size="sm"
+                variant="ghost"
+                className="p-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          {loading ? (
+            <div className="loading">Loading versions...</div>
+          ) : versions.length === 0 ? (
+            <div className="no-versions">No versions found</div>
+          ) : (
+            <div className="versions-list">
+              {versions.map((version) => (
+                <div key={version.versionNumber} className="version-item">
+                  <div className="version-info">
+                    <div className="version-title">
+                      <strong>Version {version.versionNumber}</strong>
+                      {version.title && ` - ${version.title}`}
+                    </div>
+                    <div className="version-meta">
+                      <span className="version-date">
+                        {new Date(version.createdAt).toLocaleString()}
+                      </span>
+                      <span className="version-author">
+                        by {version.createdBy}
+                      </span>
+                    </div>
+                    {version.changeDescription && (
+                      <div className="version-description">
+                        {version.changeDescription}
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => loadVersion(version.versionNumber)}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Eye className="h-3 w-3" />
+                    Load
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default VersionHistory;
