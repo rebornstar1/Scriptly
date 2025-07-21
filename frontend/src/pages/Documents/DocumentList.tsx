@@ -260,29 +260,29 @@ const DocumentList = () => {
 
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 text-gray-100 py-8 px-4 sm:px-6">
       <Toaster
         position="top-right"
         toastOptions={{
           success: {
             style: {
-              background: "#E8F5E9",
-              color: "#2E7D32",
-              borderLeft: "4px solid #2E7D32",
+              background: "#1E3A31",
+              color: "#86EFAC",
+              borderLeft: "4px solid #22C55E",
             },
           },
           error: {
             style: {
-              background: "#FFEBEE",
-              color: "#C62828",
-              borderLeft: "4px solid #C62828",
+              background: "#3A1E1E",
+              color: "#FCA5A5",
+              borderLeft: "4px solid #EF4444",
             },
           },
           loading: {
             style: {
-              background: "#E3F2FD",
-              color: "#1565C0",
-              borderLeft: "4px solid #1565C0",
+              background: "#1E293A",
+              color: "#93C5FD",
+              borderLeft: "4px solid #3B82F6",
             },
           },
           duration: 3000,
@@ -291,22 +291,22 @@ const DocumentList = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-gray-800 border-gray-700 text-gray-100">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-600" />
+            <DialogTitle className="flex items-center gap-2 text-gray-100">
+              <Trash2 className="h-5 w-5 text-red-400" />
               Delete Document
             </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "<span className="font-medium">{documentToDelete?.title || 'Untitled Document'}</span>"?
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete "<span className="font-medium text-gray-300">{documentToDelete?.title || 'Untitled Document'}</span>"?
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={closeDeleteModal}>
+            <Button variant="outline" onClick={closeDeleteModal} className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700">
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
+            <Button variant="destructive" onClick={confirmDelete} className="bg-red-900 hover:bg-red-800 text-red-100">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
@@ -329,8 +329,8 @@ const DocumentList = () => {
         {/* Header with search and create button */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
           <div className="flex items-center space-x-3">
-            <FileText className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
+            <FileText className="h-8 w-8 text-blue-400" />
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
               My Documents
             </h1>
           </div>
@@ -341,7 +341,7 @@ const DocumentList = () => {
               <Input
                 type="text"
                 placeholder="Search documents..."
-                className="pl-10 w-full"
+                className="pl-10 w-full bg-gray-800/60 border-gray-700 text-gray-200 placeholder:text-gray-500 focus:border-blue-700"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -350,7 +350,7 @@ const DocumentList = () => {
             {isAuthenticated && (
               <Button
                 onClick={handleCreateDocument}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-sm"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg shadow-blue-900/20"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Document
@@ -361,7 +361,7 @@ const DocumentList = () => {
 
         {/* Error Message */}
         {error && (
-          <Alert className="mb-6" variant="destructive">
+          <Alert className="mb-6 bg-red-900/50 border-red-800 text-red-200" variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -370,45 +370,45 @@ const DocumentList = () => {
         {loading ? (
           <div className="grid grid-cols-1 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i} className="p-5">
+              <Card key={i} className="p-5 bg-gray-800/50 backdrop-blur-sm border-gray-700">
                 <div className="flex items-start gap-4">
-                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <Skeleton className="h-10 w-10 rounded-lg bg-gray-700" />
                   <div className="flex-1 space-y-2">
-                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-5 w-3/4 bg-gray-700" />
                     <div className="flex gap-4">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-24 bg-gray-700" />
+                      <Skeleton className="h-4 w-24 bg-gray-700" />
+                      <Skeleton className="h-4 w-20 bg-gray-700" />
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Skeleton className="h-8 w-16" />
-                    <Skeleton className="h-8 w-16" />
-                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16 bg-gray-700" />
+                    <Skeleton className="h-8 w-16 bg-gray-700" />
+                    <Skeleton className="h-8 w-16 bg-gray-700" />
                   </div>
                 </div>
               </Card>
             ))}
           </div>
         ) : filteredDocuments.length === 0 ? (
-          <Card className="mt-12 p-8 text-center">
-            <div className="w-20 h-20 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <FileText className="h-10 w-10 text-blue-500" />
+          <Card className="mt-12 p-8 text-center bg-gray-800/60 border-gray-700 shadow-xl backdrop-blur-sm">
+            <div className="w-20 h-20 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700">
+              <FileText className="h-10 w-10 text-blue-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-bold text-gray-100 mb-1">
               No documents found
             </h3>
-            <p className="text-gray-500 mb-5">
+            <p className="text-gray-400 mb-5">
               {searchTerm
                 ? "No documents matching your search criteria."
                 : "Get started by creating your first document."}
             </p>
             {searchTerm ? (
-              <Button variant="outline" onClick={() => setSearchTerm("")}>
+              <Button variant="outline" onClick={() => setSearchTerm("")} className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700">
                 Clear search
               </Button>
             ) : (
-              <Button onClick={handleCreateDocument}>
+              <Button onClick={handleCreateDocument} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Create a document
               </Button>
@@ -419,7 +419,7 @@ const DocumentList = () => {
             {filteredDocuments.map((doc) => (
               <Card
                 key={doc._id}
-                className="cursor-pointer hover:shadow-md transition-all duration-200 group"
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 group bg-gray-800/60 border-gray-700/70 hover:border-blue-700/50 backdrop-blur-sm"
                 onClick={() =>
                   editingId !== doc._id && navigate(`/documents/${doc._id}`)
                 }
@@ -428,7 +428,7 @@ const DocumentList = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div className="flex-grow">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mr-4 text-blue-500">
+                        <div className="w-10 h-10 rounded-lg bg-blue-900/40 flex items-center justify-center mr-4 text-blue-400">
                           <FileText className="h-6 w-6" />
                         </div>
 
@@ -443,12 +443,12 @@ const DocumentList = () => {
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
                               onKeyDown={(e) => handleRenameKeyDown(doc._id, e)}
-                              className="text-lg font-semibold"
+                              className="text-lg font-semibold bg-gray-700 border-gray-600 text-gray-100"
                               autoComplete="off"
                             />
                             <Button
                               size="sm"
-                              className="ml-2"
+                              className="ml-2 bg-blue-700 hover:bg-blue-600"
                               onClick={(e) => handleSaveRename(doc._id, e)}
                             >
                               <Check className="h-4 w-4" />
@@ -456,32 +456,32 @@ const DocumentList = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="ml-1"
+                              className="ml-1 bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700"
                               onClick={handleCancelRename}
                             >
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
                         ) : (
-                          <h2 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                          <h2 className="text-lg font-semibold text-gray-100 group-hover:text-blue-400 transition-colors">
                             {doc.title || "Untitled Document"}
                           </h2>
                         )}
                       </div>
 
-                      <div className="mt-2 ml-14 flex flex-wrap items-center text-sm text-gray-500 gap-x-4 gap-y-1">
+                      <div className="mt-2 ml-14 flex flex-wrap items-center text-sm text-gray-400 gap-x-4 gap-y-1">
                         <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                          <Calendar className="h-4 w-4 mr-1 text-gray-500" />
                           Last edited: {formatDate(doc.updatedAt)}
                         </span>
                         <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                          <Calendar className="h-4 w-4 mr-1 text-gray-500" />
                           Created: {formatDate(doc.createdAt)}
                         </span>
                         {getDocumentOwnerDisplay(doc) && (
                           <div className="flex items-center">
-                            <Avatar className="h-4 w-4 mr-1">
-                              <AvatarFallback className="text-xs">
+                            <Avatar className="h-4 w-4 mr-1 bg-gray-700">
+                              <AvatarFallback className="text-xs text-gray-300 bg-blue-900/30">
                                 {getDocumentOwnerDisplay(doc)?.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
@@ -489,7 +489,7 @@ const DocumentList = () => {
                           </div>
                         )}
                         {doc.isPublic && (
-                          <Badge variant="secondary" className="text-green-600 bg-green-50">
+                          <Badge variant="secondary" className="text-green-400 bg-green-900/30 border border-green-700/50">
                             <Globe className="h-3 w-3 mr-1" />
                             Public
                           </Badge>
@@ -499,14 +499,13 @@ const DocumentList = () => {
 
                     {editingId !== doc._id && canUserEditDocument(doc) && (
                       <div
-                        className="flex items-center space-x-2 sm:justify-end md:opacity-0 md:group-hover:opacity-100 sm:opacity-10  transition-opacity duration-200"
+                        className="flex items-center space-x-2 sm:justify-end md:opacity-0 md:group-hover:opacity-100 sm:opacity-10 transition-opacity duration-200"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-orange-400 hover:text-orange-500 hover:bg-orange-50"
-
+                          className="text-orange-400 hover:text-orange-300 bg-orange-900/20 border-orange-800/30 hover:bg-orange-900/40"
                           onClick={(e) => handleStartRename(doc, e)}
                         >
                           <Edit className="h-4 w-4 mr-1" />
@@ -515,7 +514,7 @@ const DocumentList = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-blue-400 hover:text-blue-300 bg-blue-900/20 border-blue-800/30 hover:bg-blue-900/40"
                           onClick={(e) => openShareModal(doc, e)}
                         >
                           <Share className="h-4 w-4 mr-1" />
@@ -525,7 +524,7 @@ const DocumentList = () => {
                           size="sm"
                           variant="outline"
                           onClick={(e) => openDeleteModal(doc, e)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-400 hover:text-red-300 bg-red-900/20 border-red-800/30 hover:bg-red-900/40"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Delete

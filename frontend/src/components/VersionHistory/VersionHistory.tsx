@@ -19,11 +19,10 @@ interface VersionHistoryProps {
 
 const VersionHistory: React.FC<VersionHistoryProps> = ({ socket, documentId }) => {
   const [versions, setVersions] = useState<Version[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (socket && showHistory) {
+    if (socket) {
       setLoading(true);
       console.log('Requesting versions for document:', documentId);
       socket.emit('get-versions');
@@ -55,13 +54,12 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ socket, documentId }) =
         socket.off('document-saved', handleDocumentSaved);
       };
     }
-  }, [socket, showHistory, documentId]);
+  }, [socket, documentId]);
 
   const loadVersion = (versionNumber: number) => {
     if (socket) {
       console.log('Loading version:', versionNumber);
       socket.emit('load-version', versionNumber);
-      setShowHistory(false);
     }
   };
 
@@ -74,81 +72,57 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ socket, documentId }) =
   };
 
   return (
-    <div className="version-history-container">
-      <Button
-        onClick={() => setShowHistory(!showHistory)}
-        size="sm"
-        variant="outline"
-        className="gap-2"
-      >
-        <History className="h-4 w-4" />
-        <span className="hidden sm:inline">Versions</span>
-      </Button>
+    <div className="version-history-sidebar">
+      <div className="version-history-header">
+        <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">Document Versions</h3>
+        <Button
+          onClick={refreshVersions}
+          size="sm"
+          variant="ghost"
+          className="p-1 h-7 w-7"
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
       
-      {showHistory && (
-        <div className="version-history-panel">
-          <div className="version-history-header">
-            <h3 className="text-lg font-semibold">Version History</h3>
-            <div className="flex gap-2">
-              <Button
-                onClick={refreshVersions}
-                size="sm"
-                variant="ghost"
-                className="p-2"
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button
-                onClick={() => setShowHistory(false)}
-                size="sm"
-                variant="ghost"
-                className="p-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {loading ? (
-            <div className="loading">Loading versions...</div>
-          ) : versions.length === 0 ? (
-            <div className="no-versions">No versions found</div>
-          ) : (
-            <div className="versions-list">
-              {versions.map((version) => (
-                <div key={version.versionNumber} className="version-item">
-                  <div className="version-info">
-                    <div className="version-title">
-                      <strong>Version {version.versionNumber}</strong>
-                      {version.title && ` - ${version.title}`}
-                    </div>
-                    <div className="version-meta">
-                      <span className="version-date">
-                        {new Date(version.createdAt).toLocaleString()}
-                      </span>
-                      <span className="version-author">
-                        by {version.createdBy}
-                      </span>
-                    </div>
-                    {version.changeDescription && (
-                      <div className="version-description">
-                        {version.changeDescription}
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    onClick={() => loadVersion(version.versionNumber)}
-                    size="sm"
-                    className="gap-2"
-                  >
-                    <Eye className="h-3 w-3" />
-                    Load
-                  </Button>
+      {loading ? (
+        <div className="loading">Loading versions...</div>
+      ) : versions.length === 0 ? (
+        <div className="no-versions">No versions found</div>
+      ) : (
+        <div className="versions-list">
+          {versions.map((version) => (
+            <div key={version.versionNumber} className="version-item">
+              <div className="version-info">
+                <div className="version-title">
+                  <strong>Version {version.versionNumber}</strong>
+                  {version.title && ` - ${version.title.substring(0, 20)}${version.title.length > 20 ? '...' : ''}`}
                 </div>
-              ))}
+                <div className="version-meta">
+                  <span className="version-date">
+                    {new Date(version.createdAt).toLocaleString()}
+                  </span>
+                  <div className="version-author">
+                    by {version.createdBy}
+                  </div>
+                </div>
+                {version.changeDescription && (
+                  <div className="version-description">
+                    {version.changeDescription}
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={() => loadVersion(version.versionNumber)}
+                size="sm"
+                className="gap-1 py-1 px-3 h-8"
+              >
+                <Eye className="h-3 w-3" />
+                <span>Load</span>
+              </Button>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

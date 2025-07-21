@@ -32,7 +32,7 @@ const Header = () => {
             <FileText className="h-5 w-5 text-white" />
           </div>
           <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            CoWrite
+            Scriptly
           </span>
         </Link>
         

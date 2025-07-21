@@ -148,7 +148,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Setup axios interceptor
       setupAxiosInterceptors(newToken);
 
-      toast.success(`Welcome to CoWrite, ${newUser.firstName || newUser.username}!`);
+      toast.success(`Welcome to Scriptly, ${newUser.firstName || newUser.username}!`);
       return true;
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Registration failed';

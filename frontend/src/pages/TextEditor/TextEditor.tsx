@@ -245,14 +245,14 @@ const TextEditor = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       {/* Version viewing banner */}
       {isViewingVersion && currentVersion && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">
-          <div className="flex justify-between items-center">
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border-b border-yellow-200 dark:border-yellow-700/50 px-6 py-2 z-10">
+          <div className="flex justify-between items-center max-w-7xl mx-auto">
             <div className="flex items-center gap-3">
-              <Eye className="h-5 w-5 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-800">
+              <Eye className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <span className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                 Viewing Version {currentVersion.versionNumber} - {new Date(currentVersion.createdAt).toLocaleString()}
               </span>
             </div>
@@ -263,7 +263,7 @@ const TextEditor = () => {
                 className="gap-2 bg-green-600 hover:bg-green-700"
               >
                 <RotateCcw className="h-4 w-4" />
-                Restore This Version
+                <span className="hidden sm:inline">Restore This Version</span>
               </Button>
               <Button
                 onClick={exitVersionView}
@@ -277,9 +277,9 @@ const TextEditor = () => {
         </div>
       )}
 
-      {/* Beautiful Header with editable title and share button */}
-      <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-blue-950/30 dark:to-purple-950/30 border-b border-border/50 shadow-sm backdrop-blur-sm">
-        <div className="px-6 py-4 flex justify-between items-center">
+      {/* Header with editable title and share button */}
+      <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-blue-950/30 dark:to-purple-950/30 border-b border-border/50 shadow-sm backdrop-blur-sm sticky top-0 z-10">
+        <div className="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             {/* Editable Document Title */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -301,7 +301,7 @@ const TextEditor = () => {
                     e.currentTarget.blur();
                   }
                 }}
-                className="text-xl font-bold bg-transparent border-none outline-none focus:bg-white focus:px-3 focus:py-1 focus:rounded-lg focus:shadow-sm transition-all duration-200 min-w-0 max-w-[max-content] flex-1 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="text-xl font-bold bg-transparent border-none outline-none focus:bg-white focus:px-3 focus:py-1 focus:rounded-lg focus:shadow-sm transition-all duration-200 min-w-0 w-full max-w-md text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="Untitled Document"
                 spellCheck={false}
                 disabled={isViewingVersion}
@@ -319,14 +319,14 @@ const TextEditor = () => {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            {/* Test Button for Creating Manual Version */}
             <Button
               onClick={createManualVersion}
               size="sm"
               variant="outline"
-              className="gap-2"
+              className="gap-2 hidden sm:flex"
             >
-              Create Test Version
+              <RotateCcw className="h-4 w-4" />
+              Save Version
             </Button>
             
             <Button
@@ -350,32 +350,29 @@ const TextEditor = () => {
         </div>
       </div>
 
-      {/* Enhanced Editor Container */}
-      <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 dark:from-gray-900/50 dark:via-gray-900 dark:to-blue-950/30 py-6 px-4 flex justify-center">
-        <div className="w-full max-w-6xl">
-          {/* Editor with beautiful styling */}
-          <div className={`bg-white dark:bg-gray-900 rounded-xl shadow-xl border overflow-hidden backdrop-blur-sm ${
-            isViewingVersion ? 'border-yellow-200 dark:border-yellow-700' : 'border-gray-200/50 dark:border-gray-700/50'
-          }`}>
-            <div id="container" ref={wrapperRef} className="min-h-[600px] min-w-[1200px]" />
-          </div>
-        </div>
-      </div>
-
-      {/* Version History Section at the Bottom for Testing */}
-      <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Version History (Testing)
-            </h3>
-            <div className="text-sm text-gray-500">
-              Document ID: {documentId}
+      {/* Main Content Area - Editor and Version History */}
+      <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 dark:from-gray-900/50 dark:via-gray-900 dark:to-blue-950/30">
+        {/* Editor Container */}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-5xl mx-auto">
+            {/* Editor with improved styling */}
+            <div className={`bg-white dark:bg-gray-900 rounded-xl shadow-xl border overflow-hidden backdrop-blur-sm ${
+              isViewingVersion ? 'border-yellow-200 dark:border-yellow-700' : 'border-gray-200/50 dark:border-gray-700/50'
+            }`}>
+              <div id="container" ref={wrapperRef} className="min-h-[70vh]" />
             </div>
           </div>
-          
-          {/* Version History Component - No changes made to the component itself */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        </div>
+        
+        {/* Right Sidebar - Version History - Fixed to properly display inside the sidebar */}
+        <div className="w-80 border-l border-gray-200 dark:border-gray-700 overflow-hidden hidden lg:flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Version History
+            </h3>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
             <VersionHistory socket={socket} documentId={documentId || ''} />
           </div>
         </div>
@@ -384,7 +381,7 @@ const TextEditor = () => {
       {/* Enhanced Status bar */}
       <div className="bg-gradient-to-r from-gray-50 via-white to-gray-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 border-t border-border/50 px-6 py-2 flex justify-between items-center text-sm text-muted-foreground">
         <div className="flex items-center gap-4">
-          <span>Document ID: {documentId}</span>
+          <span className="opacity-70">Doc: {documentId?.substring(0, 8)}...</span>
           {user && (
             <span className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full" />
@@ -393,11 +390,26 @@ const TextEditor = () => {
           )}
         </div>
         <div className="flex items-center gap-4">
-          <span>{socket ? 'Connected' : 'Disconnected'}</span>
+          <span className={socket ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+            {socket ? '● Connected' : '○ Disconnected'}
+          </span>
           <span className="text-xs opacity-60">
-            {isViewingVersion ? `Viewing Version ${currentVersion?.versionNumber}` : `Last saved: ${new Date().toLocaleTimeString()}`}
+            {isViewingVersion 
+              ? `Viewing Version ${currentVersion?.versionNumber}` 
+              : `Last saved: ${new Date().toLocaleTimeString()}`}
           </span>
         </div>
+      </div>
+
+      {/* Mobile Version History (only shows on smaller screens) - Updated for better mobile display */}
+      <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 max-h-60 overflow-auto">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Version History
+          </h3>
+        </div>
+        <VersionHistory socket={socket} documentId={documentId || ''} />
       </div>
 
       {/* Share Modal */}
