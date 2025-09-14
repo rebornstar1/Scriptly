@@ -7,7 +7,7 @@ import {
     validatePasswordChange,
     handleValidationErrors 
 } from '../middleware/validation.middleware.js';
-
+// router initiation of post method
 const router = express.Router();
 
 /**
