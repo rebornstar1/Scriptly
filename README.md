@@ -284,14 +284,6 @@ npm test
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
 
-**Sanjay Paul** - *Full Stack Developer*
-- GitHub: [@rebornstar1](https://github.com/rebornstar1)
-- Email: paulsanjaym@gmail.com
-
-**Vraj Shah** - *Full Stack Developer*
-- GitHub: [@VrajShah34](https://github.com/VrajShah34)
-- Email: vrajsshah34@gmail.com
 
 **⭐ Star this repository if you found it helpful!**
